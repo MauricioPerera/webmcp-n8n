@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="es" class="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>n8n KDD — 100% Client-Side Workflow Automation (GitHub Pages)</title>
+  <meta name="description" content="Clon 100% funcional de n8n para GitHub Pages con Tailwind CSS, HTMX, FastWebMCP y KDD" />
+
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            brand: {
+              DEFAULT: '#ea580c',
+              dark: '#c2410c'
+            }
+          }
+        }
+      }
+    }
+  </script>
+
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+
+  <!-- HTMX -->
+  <script src="https://unpkg.com/htmx.org@1.9.12"></script>
+
+  <!-- Custom Styles -->
+  <link rel="stylesheet" href="src/css/styles.css" />
+</head>
+<body class="bg-[#141416] text-neutral-100 font-sans h-screen w-screen overflow-hidden flex flex-col select-none">
+
+  <!-- ========================================================================= -->
+  <!-- TOP TOOLBAR -->
+  <!-- ========================================================================= -->
+  <header class="h-14 border-b border-neutral-800 bg-[#18181c] flex items-center justify-between px-4 z-30 shrink-0">
+    <!-- Left: Brand & Workflow Picker -->
+    <div class="flex items-center gap-4">
+      <div class="flex items-center gap-2">
+        <div class="w-8 h-8 rounded-lg bg-gradient-to-tr from-orange-600 to-amber-500 flex items-center justify-center font-black text-white text-base shadow-md shadow-orange-600/20">
+          n8
+        </div>
+        <span class="font-bold text-sm tracking-tight text-white flex items-center gap-1.5">
+          n8n <span class="px-1.5 py-0.5 rounded text-[10px] font-semibold bg-orange-500/10 text-orange-400 border border-orange-500/30">KDD + WebMCP</span>
+        </span>
+      </div>
+
+      <div class="h-5 w-px bg-neutral-800"></div>
+
+      <!-- Workflow Switcher & Editable Title -->
+      <div class="flex items-center gap-2">
+        <select id="workflow-select" class="bg-[#141416] border border-neutral-700/80 rounded px-2.5 py-1 text-xs text-neutral-200 outline-none hover:border-neutral-600 transition-colors">
+        </select>
+        <input id="workflow-name-input" type="text" value="My Workflow" class="bg-transparent border-b border-transparent hover:border-neutral-700 focus:border-blue-500 px-1 py-0.5 text-xs font-medium text-neutral-300 outline-none w-44" />
+      </div>
+
+      <span id="workflow-status-pill" class="px-2 py-0.5 rounded text-[10px] font-medium bg-neutral-800 text-neutral-400 border border-neutral-700/60">
+        Ready
+      </span>
+    </div>
+
+    <!-- Center: Test Workflow Button -->
+    <div class="flex items-center gap-2">
+      <button id="run-workflow-btn" class="px-4 py-1.5 rounded-lg bg-orange-600 hover:bg-orange-500 active:bg-orange-700 text-white text-xs font-semibold flex items-center gap-2 shadow-lg shadow-orange-600/20 transition-all">
+        <i data-lucide="play" class="w-3.5 h-3.5 fill-current"></i> Test workflow
+      </button>
+      <button id="save-workflow-btn" class="px-3 py-1.5 rounded-lg bg-neutral-800 hover:bg-neutral-700 text-neutral-200 text-xs font-medium flex items-center gap-1.5 border border-neutral-700 transition-colors">
+        <i data-lucide="save" class="w-3.5 h-3.5"></i> Guardar
+      </button>
+    </div>
+
+    <!-- Right: Actions, Templates, WebMCP Explorer, Zoom -->
+    <div class="flex items-center gap-2">
+      <!-- Templates Modal Button -->
+      <button id="open-templates-btn" class="px-3 py-1.5 rounded-lg bg-blue-600/10 hover:bg-blue-600/20 text-blue-400 text-xs font-medium border border-blue-500/30 flex items-center gap-1.5 transition-colors">
+        <i data-lucide="layout-template" class="w-3.5 h-3.5"></i> Plantillas
+      </button>
+
+      <!-- WebMCP Explorer Button -->
+      <button id="open-webmcp-btn" class="px-3 py-1.5 rounded-lg bg-pink-600/10 hover:bg-pink-600/20 text-pink-400 text-xs font-medium border border-pink-500/30 flex items-center gap-1.5 transition-colors">
+        <i data-lucide="cpu" class="w-3.5 h-3.5"></i> WebMCP Explorer
+      </button>
+
+      <!-- Import / Export -->
+      <button id="export-json-btn" class="p-1.5 rounded-lg hover:bg-neutral-800 text-neutral-400 hover:text-neutral-200 transition-colors" title="Exportar Workflow (JSON)">
+        <i data-lucide="download" class="w-4 h-4"></i>
+      </button>
+      <button id="import-json-btn" class="p-1.5 rounded-lg hover:bg-neutral-800 text-neutral-400 hover:text-neutral-200 transition-colors" title="Importar Workflow (JSON)">
+        <i data-lucide="upload" class="w-4 h-4"></i>
+      </button>
+      <input id="import-file-input" type="file" accept=".json" class="hidden" />
+
+      <div class="h-5 w-px bg-neutral-800 mx-1"></div>
+
+      <!-- Zoom Controls -->
+      <div class="flex items-center bg-[#141416] border border-neutral-800 rounded-lg p-0.5">
+        <button id="zoom-out-btn" class="p-1 hover:bg-neutral-800 rounded text-neutral-400 hover:text-neutral-200 transition-colors" title="Zoom Out">
+          <i data-lucide="minus" class="w-3.5 h-3.5"></i>
+        </button>
+        <button id="zoom-reset-btn" class="px-2 text-[10px] font-mono text-neutral-400 hover:text-neutral-200 transition-colors" title="Restablecer Zoom (100%)">
+          100%
+        </button>
+        <button id="zoom-in-btn" class="p-1 hover:bg-neutral-800 rounded text-neutral-400 hover:text-neutral-200 transition-colors" title="Zoom In">
+          <i data-lucide="plus" class="w-3.5 h-3.5"></i>
+        </button>
+        <button id="zoom-fit-btn" class="p-1 hover:bg-neutral-800 rounded text-neutral-400 hover:text-neutral-200 ml-1 transition-colors" title="Ajustar a pantalla">
+          <i data-lucide="maximize-2" class="w-3.5 h-3.5"></i>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- ========================================================================= -->
+  <!-- MAIN WORKSPACE -->
+  <!-- ========================================================================= -->
+  <div class="flex-1 flex overflow-hidden relative">
+
+    <!-- Left Sidebar: Node Library -->
+    <aside class="w-64 border-r border-neutral-800 bg-[#16161a] flex flex-col shrink-0 z-20">
+      <div class="p-3 border-b border-neutral-800">
+        <div class="relative">
+          <i data-lucide="search" class="w-3.5 h-3.5 absolute left-2.5 top-2.5 text-neutral-500"></i>
+          <input id="node-search-input" type="text" placeholder="Buscar nodos..." class="w-full bg-[#141416] border border-neutral-700/70 rounded-lg pl-8 pr-3 py-1.5 text-xs text-neutral-200 outline-none focus:border-orange-500 placeholder-neutral-500" />
+        </div>
+      </div>
+
+      <!-- Searchable & Categorized Nodes List -->
+      <div id="sidebar-nodes-list" class="flex-1 overflow-y-auto p-3 space-y-4">
+        <!-- Injected dynamically by app.js -->
+      </div>
+
+      <!-- Sidebar Footer / KDD info -->
+      <div class="p-3 border-t border-neutral-800 bg-[#141416] text-[10px] text-neutral-500 flex items-center justify-between">
+        <span class="flex items-center gap-1 text-emerald-400">
+          <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping"></span>
+          KDD + FastWebMCP Live
+        </span>
+        <span class="font-mono">v1.0.0</span>
+      </div>
+    </aside>
+
+    <!-- Center Canvas Area -->
+    <main id="canvas-container" class="flex-1 relative overflow-hidden">
+      <!-- Injected dynamically by canvas.js -->
+    </main>
+
+    <!-- Right Node Configuration Drawer Container -->
+    <div id="drawer-container">
+      <!-- Injected dynamically by htmx-drawer.js -->
+    </div>
+  </div>
+
+  <!-- ========================================================================= -->
+  <!-- MODAL: TEMPLATES -->
+  <!-- ========================================================================= -->
+  <div id="templates-modal" class="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+    <div class="bg-[#1b1b1f] border border-neutral-800 rounded-2xl max-w-2xl w-full max-h-[85vh] flex flex-col shadow-2xl overflow-hidden">
+      <div class="p-5 border-b border-neutral-800 flex items-center justify-between bg-[#141416]">
+        <div>
+          <h2 class="text-base font-bold text-neutral-100 flex items-center gap-2">
+            <i data-lucide="layout-template" class="w-5 h-5 text-blue-400"></i> Plantillas de Flujos Preconfiguradas
+          </h2>
+          <p class="text-xs text-neutral-400 mt-0.5">Selecciona un flujo listo para ejecutar 100% en el navegador.</p>
+        </div>
+        <button id="close-templates-btn" class="w-8 h-8 rounded-lg hover:bg-neutral-800 text-neutral-400 hover:text-neutral-200 flex items-center justify-center transition-colors">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+      </div>
+
+      <div id="templates-list" class="flex-1 overflow-y-auto p-5 grid grid-cols-1 md:grid-cols-2 gap-4">
+        <!-- Injected dynamically by app.js -->
+      </div>
+    </div>
+  </div>
+
+  <!-- ========================================================================= -->
+  <!-- MODAL: WEBMCP EXPLORER -->
+  <!-- ========================================================================= -->
+  <div id="webmcp-modal" class="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+    <div class="bg-[#1b1b1f] border border-neutral-800 rounded-2xl max-w-3xl w-full max-h-[85vh] flex flex-col shadow-2xl overflow-hidden">
+      <div class="p-5 border-b border-neutral-800 flex items-center justify-between bg-[#141416]">
+        <div>
+          <h2 class="text-base font-bold text-neutral-100 flex items-center gap-2">
+            <i data-lucide="cpu" class="w-5 h-5 text-pink-400"></i> WebMCP Tools Explorer (document.modelContext)
+          </h2>
+          <p class="text-xs text-neutral-400 mt-0.5">Inspecciona y prueba en vivo las herramientas expuestas a agentes de IA según el estándar WebMCP.</p>
+        </div>
+        <button id="close-webmcp-btn" class="w-8 h-8 rounded-lg hover:bg-neutral-800 text-neutral-400 hover:text-neutral-200 flex items-center justify-center transition-colors">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+      </div>
+
+      <div class="flex-1 overflow-hidden grid grid-cols-1 md:grid-cols-3 divide-y md:divide-y-0 md:divide-x divide-neutral-800">
+        <!-- Left column: Registered tools list -->
+        <div class="p-4 overflow-y-auto space-y-2" id="webmcp-tools-list">
+          <!-- Injected dynamically -->
+        </div>
+
+        <!-- Right column: Tool schema & live testing sandbox -->
+        <div class="col-span-2 p-5 overflow-y-auto" id="webmcp-tool-details">
+          <!-- Injected dynamically -->
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Main Application Script -->
+  <script type="module" src="src/js/app.js"></script>
+</body>
+</html>

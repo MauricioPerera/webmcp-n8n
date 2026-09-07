@@ -1,0 +1,28 @@
+{
+  "name": "n8n-kdd",
+  "version": "1.0.0",
+  "description": "100% Client-Side n8n Clone with Tailwind CSS, HTMX, FastWebMCP/WebMCP standard and KDD Governance for GitHub Pages",
+  "type": "module",
+  "scripts": {
+    "test": "node --test tests/*.test.mjs",
+    "validate:okf": "python scripts/validate_okf.py",
+    "validate:contracts": "python scripts/validate_contracts.py",
+    "validate:all": "npm test && npm run validate:okf && npm run validate:contracts",
+    "serve": "python -m http.server 8080"
+  },
+  "keywords": [
+    "n8n",
+    "workflow-automation",
+    "dag",
+    "tailwind",
+    "htmx",
+    "webmcp",
+    "fastwebmcp",
+    "kdd",
+    "ccdd",
+    "okf",
+    "github-pages"
+  ],
+  "author": "Antigravity AI",
+  "license": "MIT"
+}

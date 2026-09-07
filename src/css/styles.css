@@ -1,0 +1,50 @@
+/* n8n-kdd: Custom Canvas & UI Styling */
+
+@keyframes flowDash {
+  to {
+    stroke-dashoffset: -28;
+  }
+}
+
+.animated-flowing-wire {
+  animation: flowDash 0.8s linear infinite;
+  filter: drop-shadow(0 0 3px rgba(16, 185, 129, 0.6));
+}
+
+/* Custom Scrollbars */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: #141416;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #27272a;
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #3f3f46;
+}
+
+/* Canvas node styling */
+.canvas-node {
+  box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.5);
+  user-select: none;
+}
+
+.canvas-node:hover {
+  box-shadow: 0 8px 24px -2px rgba(0, 0, 0, 0.7);
+}
+
+.port-handle:hover {
+  box-shadow: 0 0 8px rgba(59, 130, 246, 0.8);
+}
+
+/* Monospace fonts for JSON previews */
+pre, code {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+}
