@@ -269,10 +269,69 @@ browser_side_only: 100% (zero backend required)
       `;
     } else if (node.type === 'schedule_trigger') {
       formHtml = `
-        <div class="space-y-3">
-          <label class="block text-xs font-medium text-neutral-300">Intervalo de Ejecución (segundos)</label>
-          <input type="number" name="intervalSeconds" value="${p.intervalSeconds || 10}" min="1" max="3600"
-                 class="param-input w-full bg-[#141416] border border-neutral-700 focus:border-blue-500 rounded px-3 py-2 text-xs text-neutral-100 outline-none" />
+        <div class="space-y-4">
+          <div>
+            <label class="block text-xs font-medium text-neutral-300 mb-1">Modo de Programación</label>
+            <select name="mode" id="schedule-mode-select" class="param-input w-full bg-[#141416] border border-neutral-700 focus:border-blue-500 rounded px-3 py-2 text-xs text-neutral-100 outline-none">
+              <option value="interval" ${p.mode === 'interval' || !p.mode ? 'selected' : ''}>Intervalo Recurrente (Cada X seg/min/horas)</option>
+              <option value="specific_date" ${p.mode === 'specific_date' ? 'selected' : ''}>Fecha y Hora Determinada (Timestamp)</option>
+              <option value="cron" ${p.mode === 'cron' ? 'selected' : ''}>Expresión Cron (Estándar 5 campos)</option>
+            </select>
+          </div>
+
+          <!-- Interval settings -->
+          <div id="schedule-mode-interval" class="${(p.mode && p.mode !== 'interval') ? 'hidden' : ''} space-y-3">
+            <div class="grid grid-cols-2 gap-2">
+              <div>
+                <label class="block text-xs font-medium text-neutral-300 mb-1">Frecuencia</label>
+                <input type="number" name="intervalValue" value="${p.intervalValue || p.intervalSeconds || 10}" min="1" max="86400"
+                       class="param-input w-full bg-[#141416] border border-neutral-700 focus:border-blue-500 rounded px-3 py-2 text-xs text-neutral-100 outline-none" />
+              </div>
+              <div>
+                <label class="block text-xs font-medium text-neutral-300 mb-1">Unidad de Tiempo</label>
+                <select name="intervalUnit" class="param-input w-full bg-[#141416] border border-neutral-700 focus:border-blue-500 rounded px-3 py-2 text-xs text-neutral-100 outline-none">
+                  <option value="seconds" ${p.intervalUnit === 'seconds' || !p.intervalUnit ? 'selected' : ''}>Segundos</option>
+                  <option value="minutes" ${p.intervalUnit === 'minutes' ? 'selected' : ''}>Minutos</option>
+                  <option value="hours" ${p.intervalUnit === 'hours' ? 'selected' : ''}>Horas</option>
+                  <option value="days" ${p.intervalUnit === 'days' ? 'selected' : ''}>Días</option>
+                </select>
+              </div>
+            </div>
+          </div>
+
+          <!-- Specific date settings -->
+          <div id="schedule-mode-date" class="${p.mode !== 'specific_date' ? 'hidden' : ''} space-y-3">
+            <label class="block text-xs font-medium text-neutral-300 mb-1">Fecha y Hora de Disparo</label>
+            <input type="datetime-local" name="specificDate" value="${p.specificDate || ''}"
+                   class="param-input w-full bg-[#141416] border border-neutral-700 focus:border-blue-500 rounded px-3 py-2 text-xs text-neutral-100 outline-none" />
+            <span class="text-[10px] text-neutral-500 block">El disparador se ejecutará automáticamente cuando el reloj del navegador alcance esta fecha/hora.</span>
+          </div>
+
+          <!-- Cron expression settings -->
+          <div id="schedule-mode-cron" class="${p.mode !== 'cron' ? 'hidden' : ''} space-y-3">
+            <label class="block text-xs font-medium text-neutral-300 mb-1">Expresión Cron (minuto hora día mes día_semana)</label>
+            <input type="text" id="cron-input" name="cronExpression" value="${p.cronExpression || '0 9 * * *'}"
+                   class="param-input w-full bg-[#141416] border border-neutral-700 focus:border-blue-500 rounded px-3 py-2 text-xs font-mono text-neutral-100 outline-none" />
+            <div class="flex flex-wrap gap-1 mt-1.5 text-[10px] text-neutral-400">
+              <span class="cursor-pointer bg-neutral-800 hover:bg-neutral-700 px-2 py-0.5 rounded cron-preset" data-cron="*/5 * * * *">Cada 5 min</span>
+              <span class="cursor-pointer bg-neutral-800 hover:bg-neutral-700 px-2 py-0.5 rounded cron-preset" data-cron="0 * * * *">Cada hora</span>
+              <span class="cursor-pointer bg-neutral-800 hover:bg-neutral-700 px-2 py-0.5 rounded cron-preset" data-cron="0 9 * * *">Diario 9:00 AM</span>
+              <span class="cursor-pointer bg-neutral-800 hover:bg-neutral-700 px-2 py-0.5 rounded cron-preset" data-cron="0 0 * * 1">Lunes medianoche</span>
+            </div>
+          </div>
+
+          <!-- Trigger on load checkbox -->
+          <div class="flex items-center gap-2 pt-2 border-t border-neutral-800">
+            <input type="checkbox" id="param-trigger-on-load" name="triggerOnLoad" ${p.triggerOnLoad !== false ? 'checked' : ''} class="param-input rounded bg-[#141416] border-neutral-700 text-blue-600 focus:ring-0" />
+            <label for="param-trigger-on-load" class="text-xs text-neutral-300">Ejecutar inmediatamente al activar el flujo</label>
+          </div>
+
+          <div class="p-3 bg-neutral-900/60 rounded-lg border border-neutral-800 text-[11px] text-neutral-400 space-y-1">
+            <div class="flex items-center gap-1.5 font-medium text-amber-400">
+              <i data-lucide="info" class="w-3.5 h-3.5"></i> Ejecución en el Navegador
+            </div>
+            <p>Para que los disparadores programados se ejecuten de forma continua, activa el interruptor <strong>"Activo"</strong> en la barra superior mientras mantienes la pestaña abierta.</p>
+          </div>
         </div>
       `;
     } else if (node.type === 'if_conditional') {
@@ -472,6 +531,32 @@ browser_side_only: 100% (zero backend required)
       input.addEventListener('input', update);
       input.addEventListener('change', update);
     });
+
+    if (node.type === 'schedule_trigger') {
+      const modeSelect = this.paramsTab.querySelector('#schedule-mode-select');
+      const intervalDiv = this.paramsTab.querySelector('#schedule-mode-interval');
+      const dateDiv = this.paramsTab.querySelector('#schedule-mode-date');
+      const cronDiv = this.paramsTab.querySelector('#schedule-mode-cron');
+      const cronInput = this.paramsTab.querySelector('#cron-input');
+
+      if (modeSelect) {
+        modeSelect.addEventListener('change', (e) => {
+          const val = e.target.value;
+          intervalDiv?.classList.toggle('hidden', val !== 'interval');
+          dateDiv?.classList.toggle('hidden', val !== 'specific_date');
+          cronDiv?.classList.toggle('hidden', val !== 'cron');
+        });
+      }
+
+      this.paramsTab.querySelectorAll('.cron-preset').forEach(btn => {
+        btn.addEventListener('click', () => {
+          if (cronInput) {
+            cronInput.value = btn.dataset.cron;
+            this.engine.updateNodeParams(node.id, { cronExpression: btn.dataset.cron });
+          }
+        });
+      });
+    }
 
     if (node.type === 'edit_fields_set') {
       const listEl = this.paramsTab.querySelector('#assignments-list');

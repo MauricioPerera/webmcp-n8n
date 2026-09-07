@@ -10,11 +10,17 @@ import { HtmxDrawer } from './htmx-drawer.js';
 import { storage } from './storage.js';
 import { webmcp } from './webmcp-bridge.js';
 import { NODE_DEFINITIONS, NODE_CATEGORIES } from './node-registry.js';
+import { ClientScheduler } from './scheduler.js';
 
 export class App {
   constructor() {
     this.engine = new DagEngine();
     this.currentWorkflow = null;
+    this.scheduler = new ClientScheduler(async (node, context) => {
+      console.log(`[Scheduler Triggered]: ${node.name}`, context);
+      this.showToast(`⏰ Trigger programado ejecutado: ${node.name}`, 'info');
+      await this.runWorkflow(context);
+    });
 
     this.initElements();
     this.initCanvas();
@@ -38,6 +44,7 @@ export class App {
     this.runWorkflowBtn = document.getElementById('run-workflow-btn');
     this.saveWorkflowBtn = document.getElementById('save-workflow-btn');
     this.statusPill = document.getElementById('workflow-status-pill');
+    this.activeToggle = document.getElementById('workflow-active-toggle');
   }
 
   initCanvas() {
@@ -131,6 +138,32 @@ export class App {
     if (this.runWorkflowBtn) {
       this.runWorkflowBtn.addEventListener('click', async () => {
         await this.runWorkflow();
+      });
+    }
+
+    // Active Toggle Switch (Live Client Scheduler)
+    if (this.activeToggle) {
+      this.activeToggle.addEventListener('change', (e) => {
+        const isActive = e.target.checked;
+        if (this.currentWorkflow) {
+          this.currentWorkflow.active = isActive;
+          this.saveCurrentWorkflow();
+        }
+        if (isActive) {
+          this.scheduler.start(this.currentWorkflow);
+          if (this.statusPill) {
+            this.statusPill.className = 'px-2 py-0.5 rounded text-[10px] font-medium bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 flex items-center gap-1.5';
+            this.statusPill.innerHTML = '<span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping"></span> Activo (Scheduler)';
+          }
+          this.showToast('Automatización activada (planificador en vivo)', 'success');
+        } else {
+          this.scheduler.stop();
+          if (this.statusPill) {
+            this.statusPill.className = 'px-2 py-0.5 rounded text-[10px] font-medium bg-neutral-800 text-neutral-400 border border-neutral-700/60';
+            this.statusPill.textContent = 'Inactivo / Ready';
+          }
+          this.showToast('Automatización pausada', 'info');
+        }
       });
     }
 
@@ -387,9 +420,26 @@ export class App {
   loadWorkflow(workflow) {
     this.currentWorkflow = workflow;
     if (this.workflowNameInput) this.workflowNameInput.value = workflow.name;
+    if (this.activeToggle) {
+      this.activeToggle.checked = Boolean(workflow.active);
+    }
     this.engine.fromJSON(workflow);
     this.canvas.render();
     setTimeout(() => this.canvas.fitToScreen(), 50);
+
+    if (workflow.active) {
+      this.scheduler.start(workflow);
+      if (this.statusPill) {
+        this.statusPill.className = 'px-2 py-0.5 rounded text-[10px] font-medium bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 flex items-center gap-1.5';
+        this.statusPill.innerHTML = '<span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping"></span> Activo (Scheduler)';
+      }
+    } else {
+      this.scheduler.stop();
+      if (this.statusPill) {
+        this.statusPill.className = 'px-2 py-0.5 rounded text-[10px] font-medium bg-neutral-800 text-neutral-400 border border-neutral-700/60';
+        this.statusPill.textContent = 'Inactivo / Ready';
+      }
+    }
   }
 
   loadWorkflowById(id) {
@@ -426,6 +476,7 @@ export class App {
     if (!this.currentWorkflow) return;
     const data = this.engine.toJSON();
     this.currentWorkflow.name = this.workflowNameInput?.value.trim() || this.currentWorkflow.name;
+    this.currentWorkflow.active = Boolean(this.activeToggle?.checked);
     this.currentWorkflow.nodes = data.nodes;
     this.currentWorkflow.connections = data.connections;
 
@@ -454,7 +505,7 @@ export class App {
     this.workflowSelect.appendChild(newOpt);
   }
 
-  async runWorkflow() {
+  async runWorkflow(triggerPayload = null) {
     if (!this.runWorkflowBtn) return;
     this.runWorkflowBtn.disabled = true;
     this.runWorkflowBtn.innerHTML = `<i data-lucide="loader-2" class="w-3.5 h-3.5 animate-spin"></i> Running...`;
@@ -465,7 +516,7 @@ export class App {
     }
 
     try {
-      const summary = await this.engine.executeWorkflow();
+      const summary = await this.engine.executeWorkflow(triggerPayload);
       if (summary.success) {
         if (this.statusPill) {
           this.statusPill.className = 'px-2 py-0.5 rounded text-[10px] font-medium bg-emerald-500/20 text-emerald-400 border border-emerald-500/30';

@@ -64,8 +64,16 @@
       </span>
     </div>
 
-    <!-- Center: Test Workflow Button -->
-    <div class="flex items-center gap-2">
+    <!-- Center: Test Workflow & Active Switch -->
+    <div class="flex items-center gap-3">
+      <div class="flex items-center gap-2 bg-[#141416] border border-neutral-700/80 rounded-lg px-2.5 py-1" title="Activar ejecución automática de triggers programados">
+        <span class="text-[11px] font-medium text-neutral-400">Activo</span>
+        <label class="relative inline-flex items-center cursor-pointer">
+          <input type="checkbox" id="workflow-active-toggle" class="sr-only peer">
+          <div class="w-8 h-4 bg-neutral-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-neutral-300 after:border after:rounded-full after:h-3 after:w-3 after:transition-all peer-checked:bg-emerald-600"></div>
+        </label>
+      </div>
+
       <button id="run-workflow-btn" class="px-4 py-1.5 rounded-lg bg-orange-600 hover:bg-orange-500 active:bg-orange-700 text-white text-xs font-semibold flex items-center gap-2 shadow-lg shadow-orange-600/20 transition-all">
         <i data-lucide="play" class="w-3.5 h-3.5 fill-current"></i> Test workflow
       </button>

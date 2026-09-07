@@ -44,19 +44,43 @@ export const NODE_DEFINITIONS = {
     name: 'Schedule Trigger',
     category: 'trigger',
     icon: 'clock',
-    description: 'Triggers periodically at a specified interval.',
+    description: 'Triggers periodically at an interval, specific date/time, or cron pattern.',
     inputs: [],
     outputs: ['main'],
     defaultParams: {
+      mode: 'interval', // 'interval', 'specific_date', 'cron'
       intervalSeconds: 10,
+      intervalValue: 10,
+      intervalUnit: 'seconds', // 'seconds', 'minutes', 'hours', 'days'
+      specificDate: '',
+      cronExpression: '0 9 * * *',
       triggerOnLoad: true
     },
-    execute: async (params) => {
+    execute: async (params, inputItems, context) => {
+      const now = new Date();
+      let computedInterval = params.intervalSeconds || 10;
+      if (params.intervalValue) {
+        const val = parseInt(params.intervalValue, 10) || 10;
+        if (params.intervalUnit === 'minutes') computedInterval = val * 60;
+        else if (params.intervalUnit === 'hours') computedInterval = val * 3600;
+        else if (params.intervalUnit === 'days') computedInterval = val * 86400;
+        else computedInterval = val;
+      }
+
       return [{
         json: {
-          timestamp: new Date().toISOString(),
-          intervalSeconds: params.intervalSeconds || 10,
-          trigger: 'schedule'
+          timestamp: now.toISOString(),
+          trigger: 'schedule',
+          mode: params.mode || 'interval',
+          intervalSeconds: computedInterval,
+          scheduledDetails: {
+            mode: params.mode || 'interval',
+            intervalValue: params.intervalValue || params.intervalSeconds || 10,
+            intervalUnit: params.intervalUnit || 'seconds',
+            specificDate: params.specificDate || null,
+            cronExpression: params.cronExpression || null
+          },
+          context: context || {}
         }
       }];
     }
