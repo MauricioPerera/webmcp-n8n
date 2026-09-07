@@ -94,6 +94,11 @@
         <i data-lucide="cpu" class="w-3.5 h-3.5"></i> WebMCP Explorer
       </button>
 
+      <!-- Variables & Credentials Button -->
+      <button id="open-env-btn" class="px-3 py-1.5 rounded-lg bg-emerald-600/10 hover:bg-emerald-600/20 text-emerald-400 text-xs font-medium border border-emerald-500/30 flex items-center gap-1.5 transition-colors">
+        <i data-lucide="key" class="w-3.5 h-3.5"></i> Variables & Credenciales
+      </button>
+
       <!-- Import / Export -->
       <button id="export-json-btn" class="p-1.5 rounded-lg hover:bg-neutral-800 text-neutral-400 hover:text-neutral-200 transition-colors" title="Exportar Workflow (JSON)">
         <i data-lucide="download" class="w-4 h-4"></i>
@@ -212,6 +217,130 @@
         <!-- Right column: Tool schema & live testing sandbox -->
         <div class="col-span-2 p-5 overflow-y-auto" id="webmcp-tool-details">
           <!-- Injected dynamically -->
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========================================================================= -->
+  <!-- MODAL: VARIABLES & CREDENTIALS -->
+  <!-- ========================================================================= -->
+  <div id="env-modal" class="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+    <div class="bg-[#1b1b1f] border border-neutral-800 rounded-2xl max-w-3xl w-full max-h-[85vh] flex flex-col shadow-2xl overflow-hidden">
+      <div class="p-5 border-b border-neutral-800 flex items-center justify-between bg-[#141416]">
+        <div>
+          <h2 class="text-base font-bold text-neutral-100 flex items-center gap-2">
+            <i data-lucide="key" class="w-5 h-5 text-emerald-400"></i> Variables de Entorno & Credenciales
+          </h2>
+          <p class="text-xs text-neutral-400 mt-0.5">Almacenamiento seguro en el cliente (localStorage). Variables accesibles en cualquier flujo vía <code class="text-emerald-400 font-mono">{{ $vars.NOMBRE }}</code>.</p>
+        </div>
+        <button id="close-env-btn" class="w-8 h-8 rounded-lg hover:bg-neutral-800 text-neutral-400 hover:text-neutral-200 flex items-center justify-center transition-colors">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+      </div>
+
+      <!-- Tabs Navigation -->
+      <div class="flex border-b border-neutral-800 px-5 bg-[#141416] text-xs">
+        <button class="env-tab-btn py-3 px-4 border-b-2 border-emerald-500 text-emerald-400 font-medium flex items-center gap-2" data-tab="vars">
+          <i data-lucide="variable" class="w-4 h-4"></i> Variables Globales ($vars)
+        </button>
+        <button class="env-tab-btn py-3 px-4 border-b-2 border-transparent text-neutral-400 hover:text-neutral-200 font-medium flex items-center gap-2" data-tab="creds">
+          <i data-lucide="lock" class="w-4 h-4"></i> Credenciales de Autenticación
+        </button>
+        <button class="env-tab-btn py-3 px-4 border-b-2 border-transparent text-neutral-400 hover:text-neutral-200 font-medium flex items-center gap-2" data-tab="security">
+          <i data-lucide="shield-check" class="w-4 h-4"></i> Seguridad & Privacidad
+        </button>
+      </div>
+
+      <!-- Tab Content Containers -->
+      <div class="p-5 flex-1 overflow-y-auto space-y-4">
+        <!-- TAB 1: Global Variables -->
+        <div id="env-tab-vars" class="env-tab-content space-y-4">
+          <div class="flex items-center justify-between">
+            <span class="text-xs text-neutral-400">Define variables clave/valor globales accesibles en todos tus flujos.</span>
+            <button id="add-var-btn" class="px-3 py-1.5 bg-neutral-800 hover:bg-neutral-700 text-neutral-200 text-xs font-medium rounded-lg border border-neutral-700 flex items-center gap-1.5 transition-colors">
+              <i data-lucide="plus" class="w-3.5 h-3.5"></i> Nueva Variable
+            </button>
+          </div>
+
+          <div id="vars-list" class="space-y-2">
+            <!-- Dynamically populated -->
+          </div>
+
+          <div class="pt-3 border-t border-neutral-800 flex justify-end">
+            <button id="save-vars-btn" class="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold rounded-lg shadow transition-colors">
+              Guardar Variables
+            </button>
+          </div>
+        </div>
+
+        <!-- TAB 2: Credentials -->
+        <div id="env-tab-creds" class="env-tab-content hidden space-y-5">
+          <!-- Add New Credential Form -->
+          <div class="p-4 rounded-xl bg-[#141416] border border-neutral-800 space-y-3">
+            <h3 class="text-xs font-semibold text-neutral-200 flex items-center gap-1.5">
+              <i data-lucide="plus-circle" class="w-4 h-4 text-blue-400"></i> Registrar Nueva Credencial
+            </h3>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+              <div>
+                <label class="block text-[11px] font-medium text-neutral-400 mb-1">Nombre Descriptivo</label>
+                <input type="text" id="new-cred-name" placeholder="Ej: OpenAI Prod, GitHub Token" class="w-full bg-[#1b1b1f] border border-neutral-700 focus:border-blue-500 rounded px-2.5 py-1.5 text-xs text-neutral-100 outline-none" />
+              </div>
+              <div>
+                <label class="block text-[11px] font-medium text-neutral-400 mb-1">Tipo de Autenticación</label>
+                <select id="new-cred-type" class="w-full bg-[#1b1b1f] border border-neutral-700 focus:border-blue-500 rounded px-2.5 py-1.5 text-xs text-neutral-100 outline-none">
+                  <option value="bearer">Bearer Token (Authorization: Bearer ...)</option>
+                  <option value="header">Header Personalizado (ej: X-API-Key)</option>
+                  <option value="basic">Basic Auth (Usuario & Contraseña)</option>
+                </select>
+              </div>
+              <div>
+                <label class="block text-[11px] font-medium text-neutral-400 mb-1" id="new-cred-val-label">Token / Valor Secreto</label>
+                <input type="password" id="new-cred-val" placeholder="sk-..." class="w-full bg-[#1b1b1f] border border-neutral-700 focus:border-blue-500 rounded px-2.5 py-1.5 text-xs font-mono text-neutral-100 outline-none" />
+              </div>
+            </div>
+
+            <div id="new-cred-header-name-row" class="hidden">
+              <label class="block text-[11px] font-medium text-neutral-400 mb-1">Nombre de la Cabecera</label>
+              <input type="text" id="new-cred-header-name" value="X-API-Key" class="w-full bg-[#1b1b1f] border border-neutral-700 rounded px-2.5 py-1.5 text-xs font-mono text-neutral-100 outline-none" />
+            </div>
+
+            <div class="flex justify-end">
+              <button id="add-cred-btn" class="px-3 py-1.5 bg-blue-600 hover:bg-blue-500 text-white text-xs font-medium rounded-lg transition-colors">
+                Guardar Credencial
+              </button>
+            </div>
+          </div>
+
+          <!-- Existing Credentials List -->
+          <div>
+            <h4 class="text-xs font-semibold text-neutral-300 mb-2">Credenciales Guardadas</h4>
+            <div id="creds-list" class="space-y-2">
+              <!-- Dynamically populated -->
+            </div>
+          </div>
+        </div>
+
+        <!-- TAB 3: Security Explanation -->
+        <div id="env-tab-security" class="env-tab-content hidden space-y-3 text-xs text-neutral-300 leading-relaxed">
+          <div class="p-4 bg-[#141416] rounded-xl border border-neutral-800 space-y-2">
+            <h3 class="font-bold text-sm text-emerald-400 flex items-center gap-2">
+              <i data-lucide="shield-check" class="w-5 h-5"></i> Arquitectura de Seguridad 100% Client-Side
+            </h3>
+            <p>
+              En este clon de n8n, <strong>ninguna variable ni credencial se envía a un servidor central de telemetría</strong>.
+              Todas las claves residen exclusivamente en el espacio aislado de almacenamiento de tu propio navegador (<code class="text-neutral-200">localStorage</code> del origen).
+            </p>
+          </div>
+
+          <div class="p-4 bg-[#141416] rounded-xl border border-neutral-800 space-y-2">
+            <h4 class="font-semibold text-neutral-100 flex items-center gap-1.5">
+              <i data-lucide="share-2" class="w-4 h-4 text-blue-400"></i> Desacoplamiento de Secretos al Exportar
+            </h4>
+            <p class="text-neutral-400">
+              Al exportar un flujo a archivo JSON para compartirlo con tu equipo o en GitHub, los nodos solo referencian el <code class="text-neutral-200">credentialId</code> o la expresión <code class="text-neutral-200">{{ $vars.MI_CLAVE }}</code>. Tus tokens y API keys reales permanecen en tu navegador y no se filtran en el archivo exportado.
+            </p>
+          </div>
         </div>
       </div>
     </div>

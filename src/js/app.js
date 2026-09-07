@@ -278,6 +278,107 @@ export class App {
         if (e.target === webmcpModal) webmcpModal.classList.add('hidden');
       });
     }
+
+    // C. Variables & Credentials Modal
+    const envModal = document.getElementById('env-modal');
+    const openEnvBtn = document.getElementById('open-env-btn');
+    const closeEnvBtn = document.getElementById('close-env-btn');
+
+    if (openEnvBtn && envModal) {
+      openEnvBtn.addEventListener('click', () => {
+        this.renderEnvModal();
+        envModal.classList.remove('hidden');
+      });
+      closeEnvBtn?.addEventListener('click', () => {
+        envModal.classList.add('hidden');
+      });
+      envModal.addEventListener('click', (e) => {
+        if (e.target === envModal) envModal.classList.add('hidden');
+      });
+
+      // Tabs inside env-modal
+      envModal.querySelectorAll('.env-tab-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const tab = btn.dataset.tab;
+          envModal.querySelectorAll('.env-tab-btn').forEach(b => {
+            b.className = b.dataset.tab === tab ?
+              'env-tab-btn py-3 px-4 border-b-2 border-emerald-500 text-emerald-400 font-medium flex items-center gap-2' :
+              'env-tab-btn py-3 px-4 border-b-2 border-transparent text-neutral-400 hover:text-neutral-200 font-medium flex items-center gap-2';
+          });
+          envModal.querySelectorAll('.env-tab-content').forEach(c => c.classList.add('hidden'));
+          envModal.querySelector(`#env-tab-${tab}`)?.classList.remove('hidden');
+          if (window.lucide) window.lucide.createIcons();
+        });
+      });
+
+      // Add new variable row
+      document.getElementById('add-var-btn')?.addEventListener('click', () => {
+        const list = document.getElementById('vars-list');
+        if (!list) return;
+        const row = document.createElement('div');
+        row.className = 'flex items-center gap-2 var-row';
+        row.innerHTML = `
+          <input type="text" placeholder="KEY_NAME" class="var-key w-1/3 bg-[#141416] border border-neutral-700 rounded px-2.5 py-1.5 text-xs font-mono text-emerald-400 outline-none uppercase" />
+          <input type="text" placeholder="Valor" class="var-val flex-1 bg-[#141416] border border-neutral-700 rounded px-2.5 py-1.5 text-xs text-neutral-100 outline-none" />
+          <button class="var-del-btn p-1.5 text-neutral-500 hover:text-rose-400 transition-colors">
+            <i data-lucide="trash-2" class="w-4 h-4"></i>
+          </button>
+        `;
+        row.querySelector('.var-del-btn')?.addEventListener('click', () => row.remove());
+        list.appendChild(row);
+        if (window.lucide) window.lucide.createIcons();
+      });
+
+      // Save variables
+      document.getElementById('save-vars-btn')?.addEventListener('click', () => {
+        const list = document.getElementById('vars-list');
+        const rows = list?.querySelectorAll('.var-row') || [];
+        const vars = {};
+        rows.forEach(r => {
+          const k = r.querySelector('.var-key')?.value.trim().toUpperCase();
+          const v = r.querySelector('.var-val')?.value.trim();
+          if (k) vars[k] = v;
+        });
+        storage.saveVariables(vars);
+        this.showToast('Variables globales guardadas exitosamente', 'success');
+      });
+
+      // Credential type change
+      const credTypeSelect = document.getElementById('new-cred-type');
+      const headerRow = document.getElementById('new-cred-header-name-row');
+      const valLabel = document.getElementById('new-cred-val-label');
+      credTypeSelect?.addEventListener('change', (e) => {
+        const t = e.target.value;
+        if (headerRow) headerRow.classList.toggle('hidden', t !== 'header');
+        if (valLabel) {
+          valLabel.textContent = t === 'bearer' ? 'Bearer Token' : (t === 'basic' ? 'Contraseña' : 'Valor de Cabecera');
+        }
+      });
+
+      // Add credential
+      document.getElementById('add-cred-btn')?.addEventListener('click', () => {
+        const name = document.getElementById('new-cred-name')?.value.trim();
+        const type = document.getElementById('new-cred-type')?.value;
+        const val = document.getElementById('new-cred-val')?.value.trim();
+        const headerName = document.getElementById('new-cred-header-name')?.value.trim() || 'X-API-Key';
+
+        if (!name) {
+          alert('Por favor ingresa un nombre para la credencial');
+          return;
+        }
+
+        const cred = { name, type };
+        if (type === 'bearer') cred.token = val;
+        else if (type === 'header') { cred.headerName = headerName; cred.headerValue = val; }
+        else if (type === 'basic') { cred.user = name; cred.password = val; }
+
+        storage.saveCredential(cred);
+        document.getElementById('new-cred-name').value = '';
+        document.getElementById('new-cred-val').value = '';
+        this.renderCredentialsList();
+        this.showToast(`Credencial "${name}" registrada`, 'success');
+      });
+    }
   }
 
   renderTemplatesList(container) {
@@ -400,6 +501,73 @@ export class App {
     }
 
     renderDetails(activeTool);
+  }
+
+  renderEnvModal() {
+    this.renderVariablesList();
+    this.renderCredentialsList();
+  }
+
+  renderVariablesList() {
+    const list = document.getElementById('vars-list');
+    if (!list) return;
+    list.innerHTML = '';
+
+    const vars = storage.getVariables();
+    for (const [key, val] of Object.entries(vars)) {
+      const row = document.createElement('div');
+      row.className = 'flex items-center gap-2 var-row';
+      row.innerHTML = `
+        <input type="text" value="${key}" class="var-key w-1/3 bg-[#141416] border border-neutral-700 rounded px-2.5 py-1.5 text-xs font-mono text-emerald-400 outline-none uppercase" />
+        <input type="text" value="${val}" class="var-val flex-1 bg-[#141416] border border-neutral-700 rounded px-2.5 py-1.5 text-xs text-neutral-100 outline-none" />
+        <button class="var-del-btn p-1.5 text-neutral-500 hover:text-rose-400 transition-colors">
+          <i data-lucide="trash-2" class="w-4 h-4"></i>
+        </button>
+      `;
+      row.querySelector('.var-del-btn')?.addEventListener('click', () => row.remove());
+      list.appendChild(row);
+    }
+    if (window.lucide) window.lucide.createIcons();
+  }
+
+  renderCredentialsList() {
+    const list = document.getElementById('creds-list');
+    if (!list) return;
+    list.innerHTML = '';
+
+    const creds = storage.getCredentials();
+    if (creds.length === 0) {
+      list.innerHTML = '<div class="text-xs text-neutral-500 p-2">No hay credenciales registradas todavía.</div>';
+      return;
+    }
+
+    for (const c of creds) {
+      const item = document.createElement('div');
+      item.className = 'flex items-center justify-between p-3 rounded-lg bg-[#141416] border border-neutral-800';
+      item.innerHTML = `
+        <div class="flex items-center gap-2.5">
+          <div class="w-7 h-7 rounded bg-emerald-500/10 text-emerald-400 flex items-center justify-center">
+            <i data-lucide="key" class="w-3.5 h-3.5"></i>
+          </div>
+          <div>
+            <div class="text-xs font-medium text-neutral-200">${c.name}</div>
+            <div class="text-[10px] text-neutral-500 font-mono">Tipo: ${c.type} • ID: ${c.id}</div>
+          </div>
+        </div>
+        <button class="text-neutral-500 hover:text-rose-400 p-1 transition-colors cred-del-btn" title="Eliminar credencial">
+          <i data-lucide="trash-2" class="w-4 h-4"></i>
+        </button>
+      `;
+      item.querySelector('.cred-del-btn')?.addEventListener('click', () => {
+        if (confirm(`¿Eliminar credencial "${c.name}"?`)) {
+          storage.deleteCredential(c.id);
+          this.renderCredentialsList();
+          this.showToast(`Credencial "${c.name}" eliminada`, 'info');
+        }
+      });
+      list.appendChild(item);
+    }
+    if (window.lucide) window.lucide.createIcons();
   }
 
   loadInitialWorkflow() {
@@ -560,6 +728,7 @@ export class App {
 
 // Bootstrap on DOM load
 window.addEventListener('DOMContentLoaded', () => {
+  window.n8nStorage = storage;
   window.n8nApp = new App();
   if (window.lucide) {
     window.lucide.createIcons();

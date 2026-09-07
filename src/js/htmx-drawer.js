@@ -403,6 +403,17 @@ browser_side_only: 100% (zero backend required)
           </div>
 
           <div>
+            <label class="block text-xs font-medium text-neutral-300 mb-1">Credencial Guardada (Opcional)</label>
+            <select name="credentialId" class="param-input w-full bg-[#141416] border border-neutral-700 focus:border-blue-500 rounded px-3 py-2 text-xs text-neutral-100 outline-none">
+              <option value="">-- Sin credencial preconfigurada --</option>
+              ${((typeof window !== 'undefined' && window.n8nStorage ? window.n8nStorage.getCredentials() : [])).map(c => `
+                <option value="${c.id}" ${p.credentialId === c.id ? 'selected' : ''}>🔑 ${c.name} (${c.type})</option>
+              `).join('')}
+            </select>
+            <span class="text-[10px] text-neutral-500 mt-1 block">Inyecta cabeceras de autenticación automáticamente sin exponer secretos en el lienzo. También puedes usar <code>{{ $vars.MI_TOKEN }}</code> en URLs o cabeceras.</span>
+          </div>
+
+          <div>
             <label class="block text-xs font-medium text-neutral-300 mb-1">Body (JSON / Texto)</label>
             <textarea name="body" rows="4" class="param-input w-full bg-[#141416] border border-neutral-700 focus:border-blue-500 rounded p-3 text-xs font-mono text-neutral-100 outline-none">${p.body || ''}</textarea>
           </div>

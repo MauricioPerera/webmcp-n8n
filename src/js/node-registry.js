@@ -508,6 +508,22 @@ export const NODE_DEFINITIONS = {
           }
         }
 
+        // Inject stored credential if specified
+        if (params.credentialId && typeof window !== 'undefined' && window.n8nStorage) {
+          const cred = window.n8nStorage.getCredential(params.credentialId);
+          if (cred) {
+            if (cred.type === 'bearer' && cred.token) {
+              headersObj['Authorization'] = `Bearer ${cred.token}`;
+            } else if (cred.type === 'header' && cred.headerName && cred.headerValue) {
+              headersObj[cred.headerName] = cred.headerValue;
+            } else if (cred.type === 'basic' && cred.user) {
+              try {
+                headersObj['Authorization'] = `Basic ${btoa(`${cred.user}:${cred.password || ''}`)}`;
+              } catch {}
+            }
+          }
+        }
+
         const fetchOptions = {
           method,
           headers: headersObj

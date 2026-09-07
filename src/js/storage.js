@@ -133,6 +133,90 @@ export class WorkflowStorage {
   }
 
   // -------------------------------------------------------------
+  // VARIABLES MANAGEMENT
+  // -------------------------------------------------------------
+  getVariables() {
+    try {
+      const raw = getItem('n8n_kdd_variables');
+      return raw ? JSON.parse(raw) : {
+        APP_ENV: 'production',
+        API_BASE_URL: 'https://jsonplaceholder.typicode.com'
+      };
+    } catch {
+      return {};
+    }
+  }
+
+  saveVariables(vars) {
+    setItem('n8n_kdd_variables', JSON.stringify(vars));
+    return vars;
+  }
+
+  setVariable(key, val) {
+    const vars = this.getVariables();
+    vars[key] = val;
+    this.saveVariables(vars);
+    return vars;
+  }
+
+  deleteVariable(key) {
+    const vars = this.getVariables();
+    delete vars[key];
+    this.saveVariables(vars);
+    return vars;
+  }
+
+  // -------------------------------------------------------------
+  // CREDENTIALS MANAGEMENT
+  // -------------------------------------------------------------
+  getCredentials() {
+    try {
+      const raw = getItem('n8n_kdd_credentials');
+      return raw ? JSON.parse(raw) : [
+        {
+          id: 'cred_sample_bearer',
+          name: 'Demo Public Token',
+          type: 'bearer',
+          token: 'demo_token_12345'
+        }
+      ];
+    } catch {
+      return [];
+    }
+  }
+
+  saveCredentials(creds) {
+    setItem('n8n_kdd_credentials', JSON.stringify(creds));
+    return creds;
+  }
+
+  saveCredential(cred) {
+    const creds = this.getCredentials();
+    if (!cred.id) {
+      cred.id = `cred_${Date.now()}`;
+      cred.createdAt = new Date().toISOString();
+      creds.push(cred);
+    } else {
+      const idx = creds.findIndex(c => c.id === cred.id);
+      cred.updatedAt = new Date().toISOString();
+      if (idx >= 0) creds[idx] = cred;
+      else creds.push(cred);
+    }
+    this.saveCredentials(creds);
+    return cred;
+  }
+
+  getCredential(id) {
+    return this.getCredentials().find(c => c.id === id) || null;
+  }
+
+  deleteCredential(id) {
+    const creds = this.getCredentials().filter(c => c.id !== id);
+    this.saveCredentials(creds);
+    return creds;
+  }
+
+  // -------------------------------------------------------------
   // PRELOADED SHOWCASE TEMPLATES
   // -------------------------------------------------------------
   getTemplates() {
