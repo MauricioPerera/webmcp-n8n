@@ -7,6 +7,30 @@ const STORAGE_PREFIX = 'n8n_kdd_';
 const ACTIVE_WORKFLOW_KEY = 'n8n_kdd_active_id';
 const WORKFLOW_LIST_KEY = 'n8n_kdd_workflows';
 
+const memoryStore = new Map();
+const isStorageAvailable = typeof localStorage !== 'undefined';
+
+function getItem(key) {
+  if (isStorageAvailable) {
+    try { return localStorage.getItem(key); } catch {}
+  }
+  return memoryStore.get(key) || null;
+}
+
+function setItem(key, val) {
+  if (isStorageAvailable) {
+    try { localStorage.setItem(key, val); return; } catch {}
+  }
+  memoryStore.set(key, val);
+}
+
+function removeItem(key) {
+  if (isStorageAvailable) {
+    try { localStorage.removeItem(key); return; } catch {}
+  }
+  memoryStore.delete(key);
+}
+
 export class WorkflowStorage {
   constructor() {
     this.initStorage();
@@ -28,7 +52,7 @@ export class WorkflowStorage {
 
   getWorkflowList() {
     try {
-      const raw = localStorage.getItem(WORKFLOW_LIST_KEY);
+      const raw = getItem(WORKFLOW_LIST_KEY);
       return raw ? JSON.parse(raw) : [];
     } catch {
       return [];
@@ -36,15 +60,15 @@ export class WorkflowStorage {
   }
 
   saveWorkflowList(list) {
-    localStorage.setItem(WORKFLOW_LIST_KEY, JSON.stringify(list));
+    setItem(WORKFLOW_LIST_KEY, JSON.stringify(list));
   }
 
   getActiveWorkflowId() {
-    return localStorage.getItem(ACTIVE_WORKFLOW_KEY);
+    return getItem(ACTIVE_WORKFLOW_KEY);
   }
 
   setActiveWorkflowId(id) {
-    localStorage.setItem(ACTIVE_WORKFLOW_KEY, id);
+    setItem(ACTIVE_WORKFLOW_KEY, id);
   }
 
   saveWorkflow(workflow) {
@@ -54,7 +78,7 @@ export class WorkflowStorage {
     workflow.updatedAt = new Date().toISOString();
 
     // Save workflow data
-    localStorage.setItem(`${STORAGE_PREFIX}${workflow.id}`, JSON.stringify(workflow));
+    setItem(`${STORAGE_PREFIX}${workflow.id}`, JSON.stringify(workflow));
 
     // Update list index
     const list = this.getWorkflowList();
@@ -77,7 +101,7 @@ export class WorkflowStorage {
 
   loadWorkflow(id) {
     try {
-      const raw = localStorage.getItem(`${STORAGE_PREFIX}${id}`);
+      const raw = getItem(`${STORAGE_PREFIX}${id}`);
       if (raw) return JSON.parse(raw);
     } catch (e) {
       console.error('Error loading workflow:', e);
@@ -86,7 +110,7 @@ export class WorkflowStorage {
   }
 
   deleteWorkflow(id) {
-    localStorage.removeItem(`${STORAGE_PREFIX}${id}`);
+    removeItem(`${STORAGE_PREFIX}${id}`);
     const list = this.getWorkflowList().filter(w => w.id !== id);
     this.saveWorkflowList(list);
     if (this.getActiveWorkflowId() === id) {

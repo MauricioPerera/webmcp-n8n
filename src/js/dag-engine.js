@@ -319,8 +319,8 @@ export class DagEngine {
             }
           }
         }
-        // If upstream didn't route any items to this node (e.g. inactive branch of an IF node), skip this node
-        if (!hasActiveInput && incomingConns.some(c => nodeOutputData.has(c.fromNodeId))) {
+        // If upstream didn't route any items to this node (e.g. inactive branch of an IF node or disabled upstream), skip this node
+        if (!hasActiveInput) {
           this.executionData.set(nodeId, { input: [], output: [], status: 'skipped', duration: 0 });
           this.notify('node:status', { nodeId, status: 'skipped' });
           continue;
