@@ -1,22 +1,40 @@
 <!DOCTYPE html>
-<html lang="es" class="dark">
+<html lang="es" class="dark scroll-smooth">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>n8n KDD — 100% Client-Side Workflow Automation (GitHub Pages)</title>
-  <meta name="description" content="Clon 100% funcional de n8n para GitHub Pages con Tailwind CSS, HTMX, FastWebMCP y KDD" />
+  <title>n8n KDD — 100% Client-Side Workflow Automation con FastWebMCP</title>
+  <meta name="description" content="Clon 100% funcional de n8n para GitHub Pages (cero backend). Tailwind CSS, HTMX, protocolo WebMCP y gobernanza KDD." />
 
-  <!-- Tailwind CSS -->
+  <!-- Open Graph -->
+  <meta property="og:title" content="n8n KDD — Automatización de Flujos 100% Client-Side" />
+  <meta property="og:description" content="Clon de n8n en el navegador sin backend. Soporte de WebMCP, FastWebMCP y gobernanza KDD." />
+  <meta property="og:type" content="website" />
+
+  <!-- WebMCP Discovery Meta Tags -->
+  <meta name="webmcp:version" content="1.0" />
+  <meta name="webmcp:namespace" content="n8n" />
+
+  <!-- Fonts & Tailwind CSS -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+
   <script src="https://cdn.tailwindcss.com"></script>
   <script>
     tailwind.config = {
       darkMode: 'class',
       theme: {
         extend: {
+          fontFamily: {
+            sans: ['Inter', 'system-ui', 'sans-serif'],
+            mono: ['JetBrains Mono', 'monospace']
+          },
           colors: {
             brand: {
               DEFAULT: '#ea580c',
-              dark: '#c2410c'
+              hover: '#c2410c',
+              dark: '#9a3412'
             }
           }
         }
@@ -27,189 +45,441 @@
   <!-- Lucide Icons -->
   <script src="https://unpkg.com/lucide@latest"></script>
 
-  <!-- HTMX -->
-  <script src="https://unpkg.com/htmx.org@1.9.12"></script>
-
-  <!-- Custom Styles -->
-  <link rel="stylesheet" href="src/css/styles.css" />
+  <style>
+    .gradient-hero {
+      background: radial-gradient(circle at 50% 0%, rgba(234, 88, 12, 0.15) 0%, rgba(139, 92, 246, 0.08) 35%, transparent 70%);
+    }
+    .dot-pattern {
+      background-image: radial-gradient(#27272a 1.2px, transparent 1.2px);
+      background-size: 24px 24px;
+    }
+    .flow-line {
+      stroke-dasharray: 8, 6;
+      animation: dash 1s linear infinite;
+    }
+    @keyframes dash {
+      to { stroke-dashoffset: -28; }
+    }
+  </style>
 </head>
-<body class="bg-[#141416] text-neutral-100 font-sans h-screen w-screen overflow-hidden flex flex-col select-none">
+<body class="bg-[#0f0f11] text-neutral-100 font-sans antialiased selection:bg-orange-500 selection:text-white">
 
   <!-- ========================================================================= -->
-  <!-- TOP TOOLBAR -->
+  <!-- NAVBAR -->
   <!-- ========================================================================= -->
-  <header class="h-14 border-b border-neutral-800 bg-[#18181c] flex items-center justify-between px-4 z-30 shrink-0">
-    <!-- Left: Brand & Workflow Picker -->
-    <div class="flex items-center gap-4">
-      <div class="flex items-center gap-2">
-        <div class="w-8 h-8 rounded-lg bg-gradient-to-tr from-orange-600 to-amber-500 flex items-center justify-center font-black text-white text-base shadow-md shadow-orange-600/20">
+  <nav class="sticky top-0 z-50 backdrop-blur-md bg-[#141416]/85 border-b border-neutral-800/80 transition-colors">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+      <!-- Logo -->
+      <a href="index.html" class="flex items-center gap-2.5 group">
+        <div class="w-9 h-9 rounded-xl bg-gradient-to-tr from-orange-600 to-amber-500 flex items-center justify-center font-black text-white text-base shadow-lg shadow-orange-600/20 group-hover:scale-105 transition-transform">
           n8
         </div>
-        <span class="font-bold text-sm tracking-tight text-white flex items-center gap-1.5">
-          n8n <span class="px-1.5 py-0.5 rounded text-[10px] font-semibold bg-orange-500/10 text-orange-400 border border-orange-500/30">KDD + WebMCP</span>
-        </span>
-      </div>
-
-      <div class="h-5 w-px bg-neutral-800"></div>
-
-      <!-- Workflow Switcher & Editable Title -->
-      <div class="flex items-center gap-2">
-        <select id="workflow-select" class="bg-[#141416] border border-neutral-700/80 rounded px-2.5 py-1 text-xs text-neutral-200 outline-none hover:border-neutral-600 transition-colors">
-        </select>
-        <input id="workflow-name-input" type="text" value="My Workflow" class="bg-transparent border-b border-transparent hover:border-neutral-700 focus:border-blue-500 px-1 py-0.5 text-xs font-medium text-neutral-300 outline-none w-44" />
-      </div>
-
-      <span id="workflow-status-pill" class="px-2 py-0.5 rounded text-[10px] font-medium bg-neutral-800 text-neutral-400 border border-neutral-700/60">
-        Ready
-      </span>
-    </div>
-
-    <!-- Center: Test Workflow Button -->
-    <div class="flex items-center gap-2">
-      <button id="run-workflow-btn" class="px-4 py-1.5 rounded-lg bg-orange-600 hover:bg-orange-500 active:bg-orange-700 text-white text-xs font-semibold flex items-center gap-2 shadow-lg shadow-orange-600/20 transition-all">
-        <i data-lucide="play" class="w-3.5 h-3.5 fill-current"></i> Test workflow
-      </button>
-      <button id="save-workflow-btn" class="px-3 py-1.5 rounded-lg bg-neutral-800 hover:bg-neutral-700 text-neutral-200 text-xs font-medium flex items-center gap-1.5 border border-neutral-700 transition-colors">
-        <i data-lucide="save" class="w-3.5 h-3.5"></i> Guardar
-      </button>
-    </div>
-
-    <!-- Right: Actions, Templates, WebMCP Explorer, Zoom -->
-    <div class="flex items-center gap-2">
-      <!-- Templates Modal Button -->
-      <button id="open-templates-btn" class="px-3 py-1.5 rounded-lg bg-blue-600/10 hover:bg-blue-600/20 text-blue-400 text-xs font-medium border border-blue-500/30 flex items-center gap-1.5 transition-colors">
-        <i data-lucide="layout-template" class="w-3.5 h-3.5"></i> Plantillas
-      </button>
-
-      <!-- WebMCP Explorer Button -->
-      <button id="open-webmcp-btn" class="px-3 py-1.5 rounded-lg bg-pink-600/10 hover:bg-pink-600/20 text-pink-400 text-xs font-medium border border-pink-500/30 flex items-center gap-1.5 transition-colors">
-        <i data-lucide="cpu" class="w-3.5 h-3.5"></i> WebMCP Explorer
-      </button>
-
-      <!-- Import / Export -->
-      <button id="export-json-btn" class="p-1.5 rounded-lg hover:bg-neutral-800 text-neutral-400 hover:text-neutral-200 transition-colors" title="Exportar Workflow (JSON)">
-        <i data-lucide="download" class="w-4 h-4"></i>
-      </button>
-      <button id="import-json-btn" class="p-1.5 rounded-lg hover:bg-neutral-800 text-neutral-400 hover:text-neutral-200 transition-colors" title="Importar Workflow (JSON)">
-        <i data-lucide="upload" class="w-4 h-4"></i>
-      </button>
-      <input id="import-file-input" type="file" accept=".json" class="hidden" />
-
-      <div class="h-5 w-px bg-neutral-800 mx-1"></div>
-
-      <!-- Zoom Controls -->
-      <div class="flex items-center bg-[#141416] border border-neutral-800 rounded-lg p-0.5">
-        <button id="zoom-out-btn" class="p-1 hover:bg-neutral-800 rounded text-neutral-400 hover:text-neutral-200 transition-colors" title="Zoom Out">
-          <i data-lucide="minus" class="w-3.5 h-3.5"></i>
-        </button>
-        <button id="zoom-reset-btn" class="px-2 text-[10px] font-mono text-neutral-400 hover:text-neutral-200 transition-colors" title="Restablecer Zoom (100%)">
-          100%
-        </button>
-        <button id="zoom-in-btn" class="p-1 hover:bg-neutral-800 rounded text-neutral-400 hover:text-neutral-200 transition-colors" title="Zoom In">
-          <i data-lucide="plus" class="w-3.5 h-3.5"></i>
-        </button>
-        <button id="zoom-fit-btn" class="p-1 hover:bg-neutral-800 rounded text-neutral-400 hover:text-neutral-200 ml-1 transition-colors" title="Ajustar a pantalla">
-          <i data-lucide="maximize-2" class="w-3.5 h-3.5"></i>
-        </button>
-      </div>
-    </div>
-  </header>
-
-  <!-- ========================================================================= -->
-  <!-- MAIN WORKSPACE -->
-  <!-- ========================================================================= -->
-  <div class="flex-1 flex overflow-hidden relative">
-
-    <!-- Left Sidebar: Node Library -->
-    <aside class="w-64 border-r border-neutral-800 bg-[#16161a] flex flex-col shrink-0 z-20">
-      <div class="p-3 border-b border-neutral-800">
-        <div class="relative">
-          <i data-lucide="search" class="w-3.5 h-3.5 absolute left-2.5 top-2.5 text-neutral-500"></i>
-          <input id="node-search-input" type="text" placeholder="Buscar nodos..." class="w-full bg-[#141416] border border-neutral-700/70 rounded-lg pl-8 pr-3 py-1.5 text-xs text-neutral-200 outline-none focus:border-orange-500 placeholder-neutral-500" />
+        <div class="flex flex-col">
+          <span class="font-black text-base tracking-tight text-white flex items-center gap-1.5">
+            n8n <span class="text-orange-500">KDD</span>
+          </span>
+          <span class="text-[10px] text-neutral-400 font-semibold tracking-wider uppercase">100% Client-Side</span>
         </div>
+      </a>
+
+      <!-- Nav Links -->
+      <div class="hidden md:flex items-center gap-8 text-xs font-medium text-neutral-400">
+        <a href="#features" class="hover:text-orange-400 transition-colors">Características</a>
+        <a href="#nodes" class="hover:text-orange-400 transition-colors">Catálogo de Nodos</a>
+        <a href="#webmcp" class="hover:text-orange-400 transition-colors">FastWebMCP</a>
+        <a href="#kdd" class="hover:text-orange-400 transition-colors">Gobernanza KDD</a>
+        <a href="#templates" class="hover:text-orange-400 transition-colors">Plantillas</a>
       </div>
 
-      <!-- Searchable & Categorized Nodes List -->
-      <div id="sidebar-nodes-list" class="flex-1 overflow-y-auto p-3 space-y-4">
-        <!-- Injected dynamically by app.js -->
-      </div>
-
-      <!-- Sidebar Footer / KDD info -->
-      <div class="p-3 border-t border-neutral-800 bg-[#141416] text-[10px] text-neutral-500 flex items-center justify-between">
-        <span class="flex items-center gap-1 text-emerald-400">
-          <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping"></span>
-          KDD + FastWebMCP Live
-        </span>
-        <span class="font-mono">v1.0.0</span>
-      </div>
-    </aside>
-
-    <!-- Center Canvas Area -->
-    <main id="canvas-container" class="flex-1 relative overflow-hidden">
-      <!-- Injected dynamically by canvas.js -->
-    </main>
-
-    <!-- Right Node Configuration Drawer Container -->
-    <div id="drawer-container">
-      <!-- Injected dynamically by htmx-drawer.js -->
-    </div>
-  </div>
-
-  <!-- ========================================================================= -->
-  <!-- MODAL: TEMPLATES -->
-  <!-- ========================================================================= -->
-  <div id="templates-modal" class="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
-    <div class="bg-[#1b1b1f] border border-neutral-800 rounded-2xl max-w-2xl w-full max-h-[85vh] flex flex-col shadow-2xl overflow-hidden">
-      <div class="p-5 border-b border-neutral-800 flex items-center justify-between bg-[#141416]">
-        <div>
-          <h2 class="text-base font-bold text-neutral-100 flex items-center gap-2">
-            <i data-lucide="layout-template" class="w-5 h-5 text-blue-400"></i> Plantillas de Flujos Preconfiguradas
-          </h2>
-          <p class="text-xs text-neutral-400 mt-0.5">Selecciona un flujo listo para ejecutar 100% en el navegador.</p>
-        </div>
-        <button id="close-templates-btn" class="w-8 h-8 rounded-lg hover:bg-neutral-800 text-neutral-400 hover:text-neutral-200 flex items-center justify-center transition-colors">
-          <i data-lucide="x" class="w-5 h-5"></i>
-        </button>
-      </div>
-
-      <div id="templates-list" class="flex-1 overflow-y-auto p-5 grid grid-cols-1 md:grid-cols-2 gap-4">
-        <!-- Injected dynamically by app.js -->
+      <!-- Actions -->
+      <div class="flex items-center gap-3">
+        <a href="https://github.com/MauricioPerera/KDD" target="_blank" class="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-neutral-700 bg-neutral-800/60 hover:bg-neutral-800 text-neutral-300 text-xs font-medium transition-colors">
+          <i data-lucide="book-open" class="w-3.5 h-3.5 text-blue-400"></i> KDD Spec
+        </a>
+        <a href="app.html" class="px-4 py-2 rounded-xl bg-orange-600 hover:bg-orange-500 active:bg-orange-700 text-white text-xs font-semibold flex items-center gap-2 shadow-lg shadow-orange-600/25 hover:shadow-orange-600/40 transition-all transform hover:-translate-y-0.5">
+          <i data-lucide="play" class="w-3.5 h-3.5 fill-current"></i> Abrir Editor (Live App)
+        </a>
       </div>
     </div>
-  </div>
+  </nav>
 
   <!-- ========================================================================= -->
-  <!-- MODAL: WEBMCP EXPLORER -->
+  <!-- HERO SECTION -->
   <!-- ========================================================================= -->
-  <div id="webmcp-modal" class="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
-    <div class="bg-[#1b1b1f] border border-neutral-800 rounded-2xl max-w-3xl w-full max-h-[85vh] flex flex-col shadow-2xl overflow-hidden">
-      <div class="p-5 border-b border-neutral-800 flex items-center justify-between bg-[#141416]">
-        <div>
-          <h2 class="text-base font-bold text-neutral-100 flex items-center gap-2">
-            <i data-lucide="cpu" class="w-5 h-5 text-pink-400"></i> WebMCP Tools Explorer (document.modelContext)
-          </h2>
-          <p class="text-xs text-neutral-400 mt-0.5">Inspecciona y prueba en vivo las herramientas expuestas a agentes de IA según el estándar WebMCP.</p>
-        </div>
-        <button id="close-webmcp-btn" class="w-8 h-8 rounded-lg hover:bg-neutral-800 text-neutral-400 hover:text-neutral-200 flex items-center justify-center transition-colors">
-          <i data-lucide="x" class="w-5 h-5"></i>
-        </button>
+  <section class="relative pt-16 pb-24 overflow-hidden gradient-hero">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10 text-center">
+      <!-- Badge -->
+      <div class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-orange-500/10 border border-orange-500/20 text-orange-400 text-xs font-semibold mb-6 animate-pulse">
+        <span class="w-2 h-2 rounded-full bg-orange-500"></span>
+        v1.0.0 • 100% Client-Side • WebMCP Ready • KDD Quality Certified
       </div>
 
-      <div class="flex-1 overflow-hidden grid grid-cols-1 md:grid-cols-3 divide-y md:divide-y-0 md:divide-x divide-neutral-800">
-        <!-- Left column: Registered tools list -->
-        <div class="p-4 overflow-y-auto space-y-2" id="webmcp-tools-list">
-          <!-- Injected dynamically -->
+      <!-- Main Headline -->
+      <h1 class="text-4xl sm:text-6xl lg:text-7xl font-black tracking-tight text-white max-w-5xl mx-auto leading-tight sm:leading-none">
+        Automatización de Flujos <span class="bg-gradient-to-r from-orange-400 via-amber-300 to-orange-500 bg-clip-text text-transparent">n8n Completa</span>, 100% en tu Navegador.
+      </h1>
+
+      <!-- Subtitle -->
+      <p class="mt-6 text-base sm:text-lg text-neutral-400 max-w-3xl mx-auto leading-relaxed">
+        Un clon auténtico y 100% funcional de <strong>n8n</strong> diseñado para humanos y agentes autónomos de IA.
+        <strong>Cero backend, cero Docker, cero servidores</strong>. Desplegable instantáneamente en <strong>GitHub Pages</strong>, con motor DAG en el cliente, soporte de <strong>FastWebMCP</strong> y gobernanza formal <strong>KDD</strong>.
+      </p>
+
+      <!-- CTA Buttons -->
+      <div class="mt-8 flex flex-wrap items-center justify-center gap-4">
+        <a href="app.html" class="px-6 py-3.5 rounded-xl bg-orange-600 hover:bg-orange-500 active:bg-orange-700 text-white font-semibold text-sm flex items-center gap-2.5 shadow-xl shadow-orange-600/30 hover:shadow-orange-600/50 transition-all transform hover:-translate-y-0.5">
+          <i data-lucide="play" class="w-4 h-4 fill-current"></i> Lanzar n8n Studio
+        </a>
+        <a href="#templates" class="px-5 py-3.5 rounded-xl bg-neutral-800/80 hover:bg-neutral-800 text-neutral-200 font-medium text-sm border border-neutral-700 flex items-center gap-2 transition-all">
+          <i data-lucide="layout-template" class="w-4 h-4 text-blue-400"></i> Ver 4 Plantillas Listas
+        </a>
+        <a href="#webmcp" class="px-5 py-3.5 rounded-xl bg-pink-600/10 hover:bg-pink-600/20 text-pink-400 font-medium text-sm border border-pink-500/30 flex items-center gap-2 transition-all">
+          <i data-lucide="cpu" class="w-4 h-4"></i> Explorar WebMCP
+        </a>
+      </div>
+
+      <!-- Hero Visual: Visual Canvas Mockup -->
+      <div class="mt-14 max-w-5xl mx-auto rounded-2xl border border-neutral-800 bg-[#141416] shadow-2xl overflow-hidden text-left relative dot-pattern">
+        <!-- Top window bar -->
+        <div class="h-10 bg-[#18181c] border-b border-neutral-800 px-4 flex items-center justify-between">
+          <div class="flex items-center gap-2">
+            <div class="w-3 h-3 rounded-full bg-rose-500/80"></div>
+            <div class="w-3 h-3 rounded-full bg-amber-500/80"></div>
+            <div class="w-3 h-3 rounded-full bg-emerald-500/80"></div>
+            <span class="text-xs font-mono text-neutral-400 ml-2">FastWebMCP Agent Automation Workflow</span>
+          </div>
+          <div class="flex items-center gap-2">
+            <span class="px-2 py-0.5 rounded text-[10px] font-mono bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">✓ Executed 14ms</span>
+            <a href="app.html" class="text-xs text-orange-400 hover:text-orange-300 flex items-center gap-1 font-medium">
+              Interactuar <i data-lucide="arrow-up-right" class="w-3.5 h-3.5"></i>
+            </a>
+          </div>
         </div>
 
-        <!-- Right column: Tool schema & live testing sandbox -->
-        <div class="col-span-2 p-5 overflow-y-auto" id="webmcp-tool-details">
-          <!-- Injected dynamically -->
+        <!-- Canvas Flow Representation -->
+        <div class="p-8 relative min-h-[340px] flex flex-wrap items-center justify-center gap-8 md:gap-14 overflow-x-auto">
+          <!-- Node 1 -->
+          <div class="w-52 rounded-xl bg-[#1b1b1f] border border-emerald-500/50 p-3 shadow-xl relative">
+            <div class="h-1 rounded-t-xl bg-emerald-500 -mt-3 -mx-3 mb-2.5"></div>
+            <div class="flex items-center justify-between mb-1">
+              <span class="text-xs font-semibold text-neutral-100 flex items-center gap-1.5">
+                <i data-lucide="play" class="w-3.5 h-3.5 text-emerald-400"></i> Manual Trigger
+              </span>
+              <span class="text-[9px] px-1.5 py-0.2 rounded bg-emerald-500/20 text-emerald-400">0ms</span>
+            </div>
+            <div class="text-[10px] text-neutral-400">Trigger on demand</div>
+            <div class="absolute right-0 top-1/2 -translate-y-1/2 translate-x-2 w-3.5 h-3.5 rounded-full bg-emerald-500 border-2 border-neutral-900"></div>
+          </div>
+
+          <!-- Connecting line 1 -->
+          <div class="hidden md:flex items-center">
+            <svg class="w-12 h-6 overflow-visible">
+              <line x1="0" y1="12" x2="48" y2="12" stroke="#10b981" stroke-width="2.5" class="flow-line" />
+            </svg>
+          </div>
+
+          <!-- Node 2 -->
+          <div class="w-56 rounded-xl bg-[#1b1b1f] border border-pink-500/50 p-3 shadow-xl relative">
+            <div class="h-1 rounded-t-xl bg-pink-500 -mt-3 -mx-3 mb-2.5"></div>
+            <div class="flex items-center justify-between mb-1">
+              <span class="text-xs font-semibold text-neutral-100 flex items-center gap-1.5">
+                <i data-lucide="cpu" class="w-3.5 h-3.5 text-pink-400"></i> WebMCP Tool
+              </span>
+              <span class="text-[9px] px-1.5 py-0.2 rounded bg-emerald-500/20 text-emerald-400">4ms</span>
+            </div>
+            <div class="text-[10px] text-neutral-400">get_weather("Madrid")</div>
+            <div class="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-2 w-3.5 h-3.5 rounded-full bg-neutral-400 border-2 border-neutral-900"></div>
+            <div class="absolute right-0 top-1/2 -translate-y-1/2 translate-x-2 w-3.5 h-3.5 rounded-full bg-pink-500 border-2 border-neutral-900"></div>
+          </div>
+
+          <!-- Connecting line 2 -->
+          <div class="hidden md:flex items-center">
+            <svg class="w-12 h-6 overflow-visible">
+              <line x1="0" y1="12" x2="48" y2="12" stroke="#ec4899" stroke-width="2.5" class="flow-line" />
+            </svg>
+          </div>
+
+          <!-- Node 3 -->
+          <div class="w-56 rounded-xl bg-[#1b1b1f] border border-blue-500/50 p-3 shadow-xl relative">
+            <div class="h-1 rounded-t-xl bg-blue-500 -mt-3 -mx-3 mb-2.5"></div>
+            <div class="flex items-center justify-between mb-1">
+              <span class="text-xs font-semibold text-neutral-100 flex items-center gap-1.5">
+                <i data-lucide="git-branch" class="w-3.5 h-3.5 text-blue-400"></i> IF Condition
+              </span>
+              <span class="text-[9px] px-1.5 py-0.2 rounded bg-emerald-500/20 text-emerald-400">1ms</span>
+            </div>
+            <div class="text-[10px] text-neutral-400">{{ $json.temp > 20 }}</div>
+            <div class="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-2 w-3.5 h-3.5 rounded-full bg-neutral-400 border-2 border-neutral-900"></div>
+            <div class="absolute right-0 top-1/3 -translate-y-1/2 translate-x-2 w-3.5 h-3.5 rounded-full bg-emerald-500 border-2 border-neutral-900" title="True"></div>
+            <div class="absolute right-0 top-2/3 -translate-y-1/2 translate-x-2 w-3.5 h-3.5 rounded-full bg-rose-500 border-2 border-neutral-900" title="False"></div>
+          </div>
         </div>
       </div>
     </div>
-  </div>
+  </section>
 
-  <!-- Main Application Script -->
-  <script type="module" src="src/js/app.js"></script>
+  <!-- ========================================================================= -->
+  <!-- VALUE PILLARS / CARACTERÍSTICAS -->
+  <!-- ========================================================================= -->
+  <section id="features" class="py-20 border-t border-neutral-800/80 bg-[#121214]">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="text-center max-w-3xl mx-auto mb-16">
+        <span class="text-xs font-mono font-semibold uppercase tracking-wider text-orange-400">Poder de Automatización</span>
+        <h2 class="text-3xl sm:text-4xl font-bold text-white mt-2">Todo lo que amas de n8n, sin un solo servidor.</h2>
+        <p class="text-neutral-400 mt-3 text-sm leading-relaxed">
+          Diseñado con los estándares de la web moderna para ofrecer velocidad instantánea, privacidad local y soporte de IA de próxima generación.
+        </p>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+        <!-- Card 1 -->
+        <div class="p-6 rounded-2xl bg-[#18181c] border border-neutral-800 hover:border-orange-500/50 transition-all">
+          <div class="w-12 h-12 rounded-xl bg-orange-500/10 text-orange-400 flex items-center justify-center mb-5">
+            <i data-lucide="zap" class="w-6 h-6"></i>
+          </div>
+          <h3 class="text-lg font-bold text-white">100% Client-Side & GitHub Pages</h3>
+          <p class="text-neutral-400 text-xs mt-2.5 leading-relaxed">
+            Sin Docker, sin Node.js en ejecución y sin costos mensuales de cloud. Se ejecuta íntegramente en el navegador del usuario utilizando almacenamiento local y estándares web.
+          </p>
+        </div>
+
+        <!-- Card 2 -->
+        <div class="p-6 rounded-2xl bg-[#18181c] border border-neutral-800 hover:border-pink-500/50 transition-all">
+          <div class="w-12 h-12 rounded-xl bg-pink-500/10 text-pink-400 flex items-center justify-center mb-5">
+            <i data-lucide="cpu" class="w-6 h-6"></i>
+          </div>
+          <h3 class="text-lg font-bold text-white">FastWebMCP & WebMCP Nativo</h3>
+          <p class="text-neutral-400 text-xs mt-2.5 leading-relaxed">
+            Soporte para <code>document.modelContext</code> y <code>fastwebmcp</code>. Tus flujos pueden invocar herramientas de agentes o registrarse a sí mismos como herramientas MCP invocables.
+          </p>
+        </div>
+
+        <!-- Card 3 -->
+        <div class="p-6 rounded-2xl bg-[#18181c] border border-neutral-800 hover:border-blue-500/50 transition-all">
+          <div class="w-12 h-12 rounded-xl bg-blue-500/10 text-blue-400 flex items-center justify-center mb-5">
+            <i data-lucide="shield-check" class="w-6 h-6"></i>
+          </div>
+          <h3 class="text-lg font-bold text-white">Gobernanza KDD Rigurosa</h3>
+          <p class="text-neutral-400 text-xs mt-2.5 leading-relaxed">
+            Construido bajo el estándar <a href="https://github.com/MauricioPerera/KDD" class="text-blue-400 hover:underline">MauricioPerera/KDD</a> con 47 pruebas unitarias selladas y compuertas automáticas OKF + CCDD.
+          </p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ========================================================================= -->
+  <!-- NODE CATALOG SHOWCASE -->
+  <!-- ========================================================================= -->
+  <section id="nodes" class="py-20 border-t border-neutral-800/80 bg-[#0f0f11]">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="text-center max-w-3xl mx-auto mb-16">
+        <span class="text-xs font-mono font-semibold uppercase tracking-wider text-emerald-400">17 Nodos Listos para Usar</span>
+        <h2 class="text-3xl sm:text-4xl font-bold text-white mt-2">Un Catálogo Robusto para Cualquier Automatización</h2>
+        <p class="text-neutral-400 mt-3 text-sm leading-relaxed">
+          Desde llamadas HTTP cliente con CORS Proxy hasta sandbox JavaScript con sintaxis n8n y modelos LLM.
+        </p>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
+        <div class="p-5 rounded-xl bg-[#16161a] border border-neutral-800">
+          <div class="flex items-center gap-2 text-emerald-400 text-xs font-bold uppercase mb-3">
+            <i data-lucide="play" class="w-4 h-4"></i> Triggers
+          </div>
+          <ul class="text-xs text-neutral-300 space-y-2">
+            <li class="flex items-center gap-2"><span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span> Manual Trigger</li>
+            <li class="flex items-center gap-2"><span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span> Schedule Trigger (Cron)</li>
+            <li class="flex items-center gap-2"><span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span> Webhook / CustomEvent</li>
+            <li class="flex items-center gap-2"><span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span> WebMCP Tool Trigger</li>
+          </ul>
+        </div>
+
+        <div class="p-5 rounded-xl bg-[#16161a] border border-neutral-800">
+          <div class="flex items-center gap-2 text-blue-400 text-xs font-bold uppercase mb-3">
+            <i data-lucide="git-branch" class="w-4 h-4"></i> Lógica & Enrutamiento
+          </div>
+          <ul class="text-xs text-neutral-300 space-y-2">
+            <li class="flex items-center gap-2"><span class="w-1.5 h-1.5 rounded-full bg-blue-400"></span> IF (10 Operadores)</li>
+            <li class="flex items-center gap-2"><span class="w-1.5 h-1.5 rounded-full bg-blue-400"></span> Switch Multi-branch</li>
+            <li class="flex items-center gap-2"><span class="w-1.5 h-1.5 rounded-full bg-blue-400"></span> Filter Items</li>
+            <li class="flex items-center gap-2"><span class="w-1.5 h-1.5 rounded-full bg-blue-400"></span> Merge Branches</li>
+          </ul>
+        </div>
+
+        <div class="p-5 rounded-xl bg-[#16161a] border border-neutral-800">
+          <div class="flex items-center gap-2 text-purple-400 text-xs font-bold uppercase mb-3">
+            <i data-lucide="code" class="w-4 h-4"></i> Transformación
+          </div>
+          <ul class="text-xs text-neutral-300 space-y-2">
+            <li class="flex items-center gap-2"><span class="w-1.5 h-1.5 rounded-full bg-purple-400"></span> Code (JavaScript Sandbox)</li>
+            <li class="flex items-center gap-2"><span class="w-1.5 h-1.5 rounded-full bg-purple-400"></span> Edit Fields (Set)</li>
+            <li class="flex items-center gap-2"><span class="w-1.5 h-1.5 rounded-full bg-purple-400"></span> JSON Transform</li>
+            <li class="flex items-center gap-2"><span class="w-1.5 h-1.5 rounded-full bg-purple-400"></span> OKF / Markdown Parser</li>
+          </ul>
+        </div>
+
+        <div class="p-5 rounded-xl bg-[#16161a] border border-neutral-800">
+          <div class="flex items-center gap-2 text-pink-400 text-xs font-bold uppercase mb-3">
+            <i data-lucide="sparkles" class="w-4 h-4"></i> IA & WebMCP
+          </div>
+          <ul class="text-xs text-neutral-300 space-y-2">
+            <li class="flex items-center gap-2"><span class="w-1.5 h-1.5 rounded-full bg-pink-400"></span> WebMCP Tool Call</li>
+            <li class="flex items-center gap-2"><span class="w-1.5 h-1.5 rounded-full bg-pink-400"></span> AI Agent (LLM + WebMCP)</li>
+            <li class="flex items-center gap-2"><span class="w-1.5 h-1.5 rounded-full bg-pink-400"></span> FastWebMCP Declarative</li>
+            <li class="flex items-center gap-2"><span class="w-1.5 h-1.5 rounded-full bg-pink-400"></span> KDD Contract Gate</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ========================================================================= -->
+  <!-- PRECONFIGURED TEMPLATES -->
+  <!-- ========================================================================= -->
+  <section id="templates" class="py-20 border-t border-neutral-800/80 bg-[#121214]">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="text-center max-w-3xl mx-auto mb-16">
+        <span class="text-xs font-mono font-semibold uppercase tracking-wider text-blue-400">Plantillas Ready-to-Run</span>
+        <h2 class="text-3xl sm:text-4xl font-bold text-white mt-2">Comienza en Segundos con Flujos Probados</h2>
+        <p class="text-neutral-400 mt-3 text-sm leading-relaxed">
+          Cada plantilla ha sido verificada y testeada de extremo a extremo en la suite de calidad KDD.
+        </p>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <!-- Template 1 -->
+        <div class="p-6 rounded-2xl bg-[#18181c] border border-neutral-800 hover:border-blue-500/60 transition-all flex flex-col justify-between">
+          <div>
+            <div class="flex items-center justify-between mb-3">
+              <span class="font-bold text-base text-white">FastWebMCP Autonomous Agent</span>
+              <span class="text-[10px] font-mono px-2 py-0.5 rounded bg-pink-500/10 text-pink-400 border border-pink-500/30">IA + WebMCP</span>
+            </div>
+            <p class="text-xs text-neutral-400 leading-relaxed">
+              Descubre herramientas WebMCP del navegador, ejecuta un modelo de lenguaje en el cliente y formatea la respuesta en una tarjeta final.
+            </p>
+          </div>
+          <div class="mt-6 pt-4 border-t border-neutral-800 flex items-center justify-between">
+            <span class="text-xs text-emerald-400 font-mono">4 Nodos • 14ms ejecución</span>
+            <a href="app.html" class="px-3.5 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-500 text-white text-xs font-medium transition-colors">
+              Abrir en Editor ➔
+            </a>
+          </div>
+        </div>
+
+        <!-- Template 2 -->
+        <div class="p-6 rounded-2xl bg-[#18181c] border border-neutral-800 hover:border-emerald-500/60 transition-all flex flex-col justify-between">
+          <div>
+            <div class="flex items-center justify-between mb-3">
+              <span class="font-bold text-base text-white">KDD Contract Quality Gate</span>
+              <span class="text-[10px] font-mono px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/30">KDD Governance</span>
+            </div>
+            <p class="text-xs text-neutral-400 leading-relaxed">
+              Valida la integridad de un payload contra un contrato CCDD formal, bifurcando los registros válidos al flujo productivo y los erróneos al registro de fallos.
+            </p>
+          </div>
+          <div class="mt-6 pt-4 border-t border-neutral-800 flex items-center justify-between">
+            <span class="text-xs text-emerald-400 font-mono">6 Nodos • IF Ramificado</span>
+            <a href="app.html" class="px-3.5 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-medium transition-colors">
+              Abrir en Editor ➔
+            </a>
+          </div>
+        </div>
+
+        <!-- Template 3 -->
+        <div class="p-6 rounded-2xl bg-[#18181c] border border-neutral-800 hover:border-amber-500/60 transition-all flex flex-col justify-between">
+          <div>
+            <div class="flex items-center justify-between mb-3">
+              <span class="font-bold text-base text-white">Public API & Data Flow</span>
+              <span class="text-[10px] font-mono px-2 py-0.5 rounded bg-amber-500/10 text-amber-400 border border-amber-500/30">HTTP Fetch</span>
+            </div>
+            <p class="text-xs text-neutral-400 leading-relaxed">
+              Realiza una petición HTTP a una API REST pública, enriquece y extrae propiedades mediante código JavaScript y expone las métricas al navegador como herramienta WebMCP.
+            </p>
+          </div>
+          <div class="mt-6 pt-4 border-t border-neutral-800 flex items-center justify-between">
+            <span class="text-xs text-emerald-400 font-mono">4 Nodos • Fetch Cliente</span>
+            <a href="app.html" class="px-3.5 py-1.5 rounded-lg bg-amber-600 hover:bg-amber-500 text-white text-xs font-medium transition-colors">
+              Abrir en Editor ➔
+            </a>
+          </div>
+        </div>
+
+        <!-- Template 4 -->
+        <div class="p-6 rounded-2xl bg-[#18181c] border border-neutral-800 hover:border-purple-500/60 transition-all flex flex-col justify-between">
+          <div>
+            <div class="flex items-center justify-between mb-3">
+              <span class="font-bold text-base text-white">FastWebMCP Form Submission Bridge</span>
+              <span class="text-[10px] font-mono px-2 py-0.5 rounded bg-purple-500/10 text-purple-400 border border-purple-500/30">Declarative WebMCP</span>
+            </div>
+            <p class="text-xs text-neutral-400 leading-relaxed">
+              Enlaza un formulario declarativo en el DOM mediante FastWebMCP, procesa las entradas con cálculos matemáticos y despacha el ticket confirmado.
+            </p>
+          </div>
+          <div class="mt-6 pt-4 border-t border-neutral-800 flex items-center justify-between">
+            <span class="text-xs text-emerald-400 font-mono">4 Nodos • DOM Declarativo</span>
+            <a href="app.html" class="px-3.5 py-1.5 rounded-lg bg-purple-600 hover:bg-purple-500 text-white text-xs font-medium transition-colors">
+              Abrir en Editor ➔
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ========================================================================= -->
+  <!-- CTA & GITHUB PAGES DEPLOYMENT -->
+  <!-- ========================================================================= -->
+  <section class="py-20 border-t border-neutral-800 bg-[#0f0f11] text-center">
+    <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="w-16 h-16 rounded-2xl bg-gradient-to-tr from-orange-600 to-amber-500 flex items-center justify-center mx-auto mb-6 shadow-xl shadow-orange-600/30 font-black text-white text-2xl">
+        n8
+      </div>
+      <h2 class="text-3xl sm:text-5xl font-black text-white">Comienza a automatizar sin límites ahora.</h2>
+      <p class="mt-4 text-neutral-400 text-sm max-w-2xl mx-auto leading-relaxed">
+        Todo el poder de n8n en una SPA ultraligera, libre y autónoma para GitHub Pages.
+      </p>
+
+      <div class="mt-8 flex flex-wrap items-center justify-center gap-4">
+        <a href="app.html" class="px-8 py-4 rounded-xl bg-orange-600 hover:bg-orange-500 text-white font-bold text-base shadow-xl shadow-orange-600/40 hover:shadow-orange-600/60 transition-all transform hover:-translate-y-0.5">
+          Lanzar n8n Studio Ahora 🚀
+        </a>
+      </div>
+
+      <div class="mt-8 inline-flex items-center gap-3 bg-[#18181c] border border-neutral-800 rounded-lg px-4 py-2 text-xs font-mono text-neutral-400">
+        <span class="text-emerald-400">$</span> git push origin master ➔ GitHub Pages Online
+      </div>
+    </div>
+  </section>
+
+  <!-- ========================================================================= -->
+  <!-- FOOTER -->
+  <!-- ========================================================================= -->
+  <footer class="border-t border-neutral-800/80 bg-[#0c0c0e] py-12 text-xs text-neutral-500">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-wrap items-center justify-between gap-6">
+      <div class="flex items-center gap-3">
+        <div class="w-6 h-6 rounded-md bg-orange-600 flex items-center justify-center font-bold text-white text-xs">
+          n8
+        </div>
+        <span class="text-neutral-400">n8n KDD • Cero Backend • 100% Client-Side</span>
+      </div>
+
+      <div class="flex flex-wrap items-center gap-6">
+        <a href="https://github.com/MauricioPerera/KDD" target="_blank" class="hover:text-neutral-300 transition-colors">MauricioPerera/KDD</a>
+        <a href="https://mauricioperera.github.io/fastwebmcp/" target="_blank" class="hover:text-neutral-300 transition-colors">FastWebMCP</a>
+        <a href="https://webmcp.com" target="_blank" class="hover:text-neutral-300 transition-colors">webmcp.com</a>
+        <a href="app.html" class="text-orange-400 hover:underline">Abrir App</a>
+      </div>
+
+      <div>
+        <span>Licencia MIT • Desarrollado con Tailwind CSS & HTMX</span>
+      </div>
+    </div>
+  </footer>
+
+  <script>
+    if (window.lucide) {
+      window.lucide.createIcons();
+    }
+  </script>
 </body>
 </html>
