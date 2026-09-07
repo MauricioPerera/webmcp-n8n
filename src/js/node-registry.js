@@ -498,7 +498,11 @@ export const NODE_DEFINITIONS = {
         const method = (params.method || 'GET').toUpperCase();
 
         if (params.useCorsProxy) {
-          url = `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`;
+          if (typeof window !== 'undefined' && window.location && (window.location.hostname.includes('pages.dev') || window.location.hostname === 'localhost')) {
+            url = `/api/proxy?url=${encodeURIComponent(url)}`;
+          } else {
+            url = `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`;
+          }
         }
 
         const headersObj = {};
