@@ -304,7 +304,8 @@ export const NODE_DEFINITIONS = {
         item: safeItems[0] ? safeItems[0].json : {}
       };
 
-      const fn = new Function('$input', 'items', '$node', '$now', `
+      const AsyncFunction = Object.getPrototypeOf(async function(){}).constructor;
+      const fn = new AsyncFunction('$input', 'items', '$node', '$now', `
         try {
           ${code}
         } catch (err) {
@@ -312,7 +313,7 @@ export const NODE_DEFINITIONS = {
         }
       `);
 
-      const result = fn(inputProxy, safeItems, context?.nodeOutputs || {}, new Date().toISOString());
+      const result = await fn(inputProxy, safeItems, context?.nodeOutputs || {}, new Date().toISOString());
 
       // Normalize output to n8n item array [{ json: { ... } }]
       if (!result) return [];

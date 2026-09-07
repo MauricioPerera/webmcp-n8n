@@ -282,6 +282,12 @@ describe('Adversarial & Error Injection Suite: All Node Types', () => {
     await assert.rejects(async () => {
       await codeNode.execute({ code: 'const a = null; return a.crash();' }, [{ json: {} }]);
     }, /User Code Error/i);
+
+    // 5. Async / Await and Promise resolution
+    const resAsync = await codeNode.execute({
+      code: 'await new Promise(r => setTimeout(r, 10)); return [{ json: { asyncOk: true } }];'
+    }, [{ json: {} }]);
+    assert.equal(resAsync[0].json.asyncOk, true);
   });
 
   test('json_transform handles invalid JSON gracefully with _parseError', async () => {
